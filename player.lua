@@ -71,7 +71,7 @@ function Player:draw()
 
 
     local animation = self.punching and self.punch or self.animation
-    animation:draw(img, self.x, self.y, 0 , 3, 3)
+    animation:draw(img, self.x, self.y, 0 , 2, 2)
 end
 
 return Player
