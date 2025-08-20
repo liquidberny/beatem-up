@@ -62,7 +62,6 @@ function Player:update(dt)
         self.y = self.y + self.speed * dt
         self.moving = true
     end
-
 end
 
 
@@ -71,7 +70,7 @@ function Player:draw()
 
 
     local animation = self.punching and self.punch or self.animation
-    animation:draw(img, self.x, self.y, 0 , 2, 2)
+    animation:draw(img, self.x, self.y)
 end
 
 return Player
