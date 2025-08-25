@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="23">
  <editorsettings>
   <export target="Street.lua" format="lua"/>
  </editorsettings>
  <tileset firstgid="1" name="StreetTiles" tilewidth="16" tileheight="16" tilecount="128" columns="8">
   <image source="../SMS Market Street Tile Set Files/SMS_16x16_TileSet.png" width="128" height="256"/>
  </tileset>
- <layer id="1" name="Tile Layer 1" width="30" height="20">
+ <layer id="1" name="Background" width="30" height="20">
   <data encoding="csv">
 2,10,11,4,4,27,27,27,5,5,5,60,60,60,8,8,8,8,8,8,8,8,8,8,4,4,5,5,5,5,
 2,10,11,4,4,27,60,27,27,5,5,60,60,60,8,8,8,8,8,8,8,8,8,8,4,4,5,5,5,5,
@@ -30,4 +30,13 @@
 122,122,123,125,126,122,122,122,122,122,122,122,122,122,122,122,122,122,122,122,122,122,122,123,125,126,122,122,122,122
 </data>
  </layer>
+ <objectgroup id="3" name="Walls">
+  <object id="9" x="-16" y="0" width="16" height="320"/>
+  <object id="10" x="0" y="-16" width="480" height="16"/>
+  <object id="11" x="481" y="0" width="16" height="320"/>
+  <object id="12" x="0" y="320" width="480" height="16"/>
+  <object id="14" x="0" y="0" width="480" height="144"/>
+  <object id="15" x="48" y="144" width="176" height="16"/>
+  <object id="17" x="400" y="144" width="80" height="16"/>
+ </objectgroup>
 </map>
