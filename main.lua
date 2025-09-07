@@ -3,29 +3,25 @@ local bump = require("lib.bump")
 local world = bump.newWorld()
 
 
-local function drawBlocks()
-    for _, block in ipairs(blocks) do
-        drawBox(block, 1, 0, 0)
-    end
-end
-
 function love.load()
     Object = require("lib.classic")
     local Player = require("player")
+    local Enemy = require("enemy")
     sti = require("lib/sti")
     gameMap = sti("Maps/Street.lua")
     p1 = Player(100, 200)
+    e1 = Enemy(200, 200)
     camera = require("lib.camera")
     cam = camera(p1.x, p1.y, 2)
 
     world:add(p1, p1.x, p1.y, 16, 32)
+    world:add(e1, e1.x, e1.y, 16, 32)
 
     if gameMap.layers["Walls"] then
         for _, wall in ipairs(gameMap.layers["Walls"].objects) do
             world:add(wall, wall.x, wall.y, wall.width, wall.height)
         end
     end
-    addBlock(200, 250, 16, 32)
 end
 
 function love.update(dt)
@@ -33,6 +29,7 @@ function love.update(dt)
     cam:move(dx / 2, dy / 2)
 
     p1:update(dt, world)
+    e1:update(dt, world)
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
 
@@ -61,7 +58,6 @@ function love.draw()
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Background"])
     p1:draw()
-    
-    drawBlocks()
+    e1:draw()
     cam:detach()
 end

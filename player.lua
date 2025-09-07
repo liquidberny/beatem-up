@@ -6,9 +6,9 @@ local Player = Character:extend()
 function Player:new(x, y)
     Player.super.new(self, x, y)
 
-    self.walkingImage = love.graphics.newImage("Sprites/Walk_1.png")
-    self.idleImage = love.graphics.newImage("Sprites/Idle_1.png")
-    self.punchImage = love.graphics.newImage("Sprites/Punch.png")
+    self.walkingImage = love.graphics.newImage("Sprites/Player/Walk_1.png")
+    self.idleImage = love.graphics.newImage("Sprites/Player/Idle_1.png")
+    self.punchImage = love.graphics.newImage("Sprites/Player/Punch.png")
     local g = anim8.newGrid(16, 32, self.walkingImage:getWidth(), self.walkingImage:getHeight())
     local singleG = anim8.newGrid(20, 32, self.punchImage:getWidth(), self.punchImage:getHeight())
 
