@@ -4,7 +4,7 @@ local anim8 = require "lib.anim8"
 local Enemy = Character:extend()
 
 function Enemy:new(x, y)
-    Enemy.super.new(self, x, y)
+    Enemy.super.new(self, x, y, 50)
 
     self.walkingImage = love.graphics.newImage("Sprites/Enemy/Walk.png")
     self.idleImage = love.graphics.newImage("Sprites/Enemy/Idle.png")
@@ -20,9 +20,15 @@ function Enemy:new(x, y)
     self.forward = true
 end
 
-function Enemy:update(dt, world)
+function Enemy:update(dt, world, px, py)
     self.animation:update(dt)
 
+    local angle = math.atan2(py - self.y, px - self.x)
+    local cos = math.cos(angle)
+    local sin = math.sin(angle)
+
+    self.x = self.x + cos * self.speed * dt
+    self.y = self.y + sin * self.speed * dt
 end
 
 function Enemy:draw()
