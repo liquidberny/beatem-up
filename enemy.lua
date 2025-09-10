@@ -22,13 +22,23 @@ end
 
 function Enemy:update(dt, world, px, py)
     self.animation:update(dt)
+    self.moving = true
+    local dx =  self.x - px
+    local dy =  self.y - py
 
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
     local angle = math.atan2(py - self.y, px - self.x)
     local cos = math.cos(angle)
     local sin = math.sin(angle)
+    
+    if distance < 16 then
+        self.moving = false
+    else 
+        self.x = self.x + cos * self.speed * dt 
+        self.y = self.y + sin * self.speed * dt
+    end
 
-    self.x = self.x + cos * self.speed * dt
-    self.y = self.y + sin * self.speed * dt
 end
 
 function Enemy:draw()
