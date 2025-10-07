@@ -17,7 +17,13 @@ function Player:new(x, y)
 
     self.moving = false
     self.punching = false
-    self.forward = true
+    
+    
+    self.scaleX = 1 
+    
+    
+    self.walkOriginX = 8  
+    self.punchOriginX = 10 
 end
 
 function Player:update(dt, world)
@@ -37,21 +43,11 @@ function Player:update(dt, world)
     if love.keyboard.isDown("left") and self.punching == false then
         dx = -speed * dt
         self.moving = true
-
-        if self.forward then
-            self.forward = false
-            self.animation:flipH()
-            self.punch:flipH()
-        end
+        self.scaleX = -1 
     elseif love.keyboard.isDown("right") and self.punching == false then
         dx = speed * dt
         self.moving = true
-
-        if not self.forward then
-            self.forward = true
-            self.animation:flipH()
-            self.punch:flipH()
-        end
+        self.scaleX = 1 
     end
 
     if love.keyboard.isDown("up") and self.punching == false then
@@ -65,14 +61,22 @@ function Player:update(dt, world)
     if dx ~= 0 or dy ~= 0 then
         self.x, self.y = world:move(self, self.x + dx, self.y + dy)
     end
-
 end
 
 function Player:draw()
     local img = self.moving and self.walkingImage or self.punching and self.punchImage or self.idleImage
-
     local animation = self.punching and self.punch or self.animation
-    animation:draw(img, self.x, self.y)
+    
+    
+    local originX
+    if self.punching then
+        originX = self.punchOriginX
+    else
+        originX = self.walkOriginX
+    end
+    
+    
+    animation:draw(img, self.x, self.y, nil, self.scaleX, 1, originX, 16)
 end
 
 return Player
