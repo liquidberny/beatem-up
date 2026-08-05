@@ -22,9 +22,15 @@ function love.load()
             world:add(wall, wall.x, wall.y, wall.width, wall.height)
         end
     end
+
+    gameState = "menu"
 end
 
 function love.update(dt)
+    if gameState ~= "playing" then
+        return
+    end
+
     local dx, dy = p1.x - cam.x, p1.y - cam.y
     cam:move(dx / 2, dy / 2)
 
@@ -90,7 +96,26 @@ function drawHUD()
     love.graphics.setColor(1, 1, 1)
 end
 
+function drawMenu()
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("BEAT 'EM UP", 0, h / 4, w, "center")
+    love.graphics.printf("Presiona ENTER para iniciar", 0, h / 4 + 30, w, "center")
+
+    love.graphics.printf("Controles", 0, h / 2 + 20, w, "center")
+    love.graphics.printf("Flechas: moverse", 0, h / 2 + 45, w, "center")
+    love.graphics.printf("Z: golpear", 0, h / 2 + 65, w, "center")
+    love.graphics.printf("D: alternar hitboxes de debug", 0, h / 2 + 85, w, "center")
+end
+
 function love.draw()
+    if gameState ~= "playing" then
+        drawMenu()
+        return
+    end
+
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Background"])
     p1:draw()
@@ -119,6 +144,13 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    if gameState ~= "playing" then
+        if key == "return" or key == "space" then
+            gameState = "playing"
+        end
+        return
+    end
+
     if key == "d" then
         debugMode = not debugMode
     end
