@@ -12,7 +12,7 @@ function love.load()
     p1 = Player(100, 200)
     e1 = Enemy(200, 200, 50)
     camera = require("lib.camera")
-    cam = camera(p1.x, p1.y, 2)
+    cam = camera(p1.x, p1.y, 3)
 
     world:add(p1, p1.x, p1.y, 16, 32)
     world:add(e1, e1.x, e1.y, 16, 32)
@@ -37,20 +37,23 @@ function love.update(dt)
     local mapW = gameMap.width * gameMap.tilewidth
     local mapH = gameMap.height * gameMap.tileheight
 
-    if cam.x < w / 4 then
-        cam.x = w / 4
+    local halfViewW = w / (2 * cam.scale)
+    local halfViewH = h / (2 * cam.scale)
+
+    if cam.x < halfViewW then
+        cam.x = halfViewW
     end
 
-    if cam.x > mapW - w / 4 then
-        cam.x = mapW - w / 4
+    if cam.x > mapW - halfViewW then
+        cam.x = mapW - halfViewW
     end
 
-    if cam.y < h / 4 then
-        cam.y = h / 4
+    if cam.y < halfViewH then
+        cam.y = halfViewH
     end
 
-    if cam.y > mapH - h / 4 then
-        cam.y = mapH - h / 4
+    if cam.y > mapH - halfViewH then
+        cam.y = mapH - halfViewH
     end
 
 end
