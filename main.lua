@@ -13,7 +13,7 @@ function love.load()
     p1 = Player(100, 200)
     e1 = Enemy(200, 200, 50)
     camera = require("lib.camera")
-    cam = camera(p1.x, p1.y, 2)
+    cam = camera(p1.x, p1.y, 3)
 
     world:add(p1, p1.x + Character.footprintOffsetX, p1.y + Character.footprintOffsetY,
         Character.footprintWidth, Character.footprintHeight)
@@ -25,9 +25,15 @@ function love.load()
             world:add(wall, wall.x, wall.y, wall.width, wall.height)
         end
     end
+
+    gameState = "menu"
 end
 
 function love.update(dt)
+    if gameState ~= "playing" then
+        return
+    end
+
     local dx, dy = p1.x - cam.x, p1.y - cam.y
     cam:move(dx / 2, dy / 2)
 
@@ -40,20 +46,23 @@ function love.update(dt)
     local mapW = gameMap.width * gameMap.tilewidth
     local mapH = gameMap.height * gameMap.tileheight
 
-    if cam.x < w / 4 then
-        cam.x = w / 4
+    local halfViewW = w / (2 * cam.scale)
+    local halfViewH = h / (2 * cam.scale)
+
+    if cam.x < halfViewW then
+        cam.x = halfViewW
     end
 
-    if cam.x > mapW - w / 4 then
-        cam.x = mapW - w / 4
+    if cam.x > mapW - halfViewW then
+        cam.x = mapW - halfViewW
     end
 
-    if cam.y < h / 4 then
-        cam.y = h / 4
+    if cam.y < halfViewH then
+        cam.y = halfViewH
     end
 
-    if cam.y > mapH - h / 4 then
-        cam.y = mapH - h / 4
+    if cam.y > mapH - halfViewH then
+        cam.y = mapH - halfViewH
     end
 
 end
@@ -90,7 +99,26 @@ function drawHUD()
     love.graphics.setColor(1, 1, 1)
 end
 
+function drawMenu()
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("BEAT 'EM UP", 0, h / 4, w, "center")
+    love.graphics.printf("Presiona ENTER para iniciar", 0, h / 4 + 30, w, "center")
+
+    love.graphics.printf("Controles", 0, h / 2 + 20, w, "center")
+    love.graphics.printf("Flechas: moverse", 0, h / 2 + 45, w, "center")
+    love.graphics.printf("Z: golpear", 0, h / 2 + 65, w, "center")
+    love.graphics.printf("D: alternar hitboxes de debug", 0, h / 2 + 85, w, "center")
+end
+
 function love.draw()
+    if gameState ~= "playing" then
+        drawMenu()
+        return
+    end
+
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Background"])
     p1:draw()
@@ -119,6 +147,13 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    if gameState ~= "playing" then
+        if key == "return" or key == "space" then
+            gameState = "playing"
+        end
+        return
+    end
+
     if key == "d" then
         debugMode = not debugMode
     end
