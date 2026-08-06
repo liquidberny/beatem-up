@@ -5,6 +5,7 @@ local world = bump.newWorld()
 
 function love.load()
     Object = require("lib.classic")
+    local Character = require("character")
     local Player = require("player")
     local Enemy = require("enemy")
     sti = require("lib/sti")
@@ -14,8 +15,10 @@ function love.load()
     camera = require("lib.camera")
     cam = camera(p1.x, p1.y, 2)
 
-    world:add(p1, p1.x, p1.y, 16, 32)
-    world:add(e1, e1.x, e1.y, 16, 32)
+    world:add(p1, p1.x + Character.footprintOffsetX, p1.y + Character.footprintOffsetY,
+        Character.footprintWidth, Character.footprintHeight)
+    world:add(e1, e1.x + Character.footprintOffsetX, e1.y + Character.footprintOffsetY,
+        Character.footprintWidth, Character.footprintHeight)
 
     if gameMap.layers["Walls"] then
         for _, wall in ipairs(gameMap.layers["Walls"].objects) do

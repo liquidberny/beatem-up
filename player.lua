@@ -67,7 +67,11 @@ function Player:update(dt, world)
     end
 
     if dx ~= 0 or dy ~= 0 then
-        self.x, self.y = world:move(self, self.x + dx, self.y + dy)
+        local goalX = self.x + dx + Character.footprintOffsetX
+        local goalY = self.y + dy + Character.footprintOffsetY
+        local actualX, actualY = world:move(self, goalX, goalY, Character.movementFilter)
+        self.x = actualX - Character.footprintOffsetX
+        self.y = actualY - Character.footprintOffsetY
     end
 end
 

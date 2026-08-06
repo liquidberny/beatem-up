@@ -62,7 +62,11 @@ function Enemy:update(dt, world, player)
         local angle = math.atan2(py - self.y, px - self.x)
         local moveX = math.cos(angle) * self.speed * dt
         local moveY = math.sin(angle) * self.speed * dt
-        self.x, self.y = world:move(self, self.x + moveX, self.y + moveY)
+        local goalX = self.x + moveX + Character.footprintOffsetX
+        local goalY = self.y + moveY + Character.footprintOffsetY
+        local actualX, actualY = world:move(self, goalX, goalY, Character.movementFilter)
+        self.x = actualX - Character.footprintOffsetX
+        self.y = actualY - Character.footprintOffsetY
     end
 end
 
