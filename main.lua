@@ -1,30 +1,64 @@
-local p1
-local e1
 local bump = require("lib.bump")
-local world = bump.newWorld()
+local camera = require("lib.camera")
 
-function love.load()
-    Object = require("lib.classic")
-    local Character = require("character")
-    local Player = require("player")
-    local Enemy = require("enemy")
-    sti = require("lib/sti")
-    gameMap = sti("Maps/Street.lua")
+local world
+local p1
+local enemies = {}
+local Character, Player, Enemy
+
+local spawnPoints = {
+    { 150, 210 },
+    { 350, 210 },
+    { 250, 270 },
+    { 100, 280 },
+}
+
+local moveStyles = { "direct", "strafer", "erratic" }
+local moveStyleIndex = 0
+
+local function spawnEnemy()
+    local pt = spawnPoints[math.random(#spawnPoints)]
+    local e = Enemy(pt[1], pt[2])
+    moveStyleIndex = moveStyleIndex % #moveStyles + 1
+    e.moveStyle = moveStyles[moveStyleIndex]
+    world:add(e, e.x + Character.footprintOffsetX, e.y + Character.footprintOffsetY,
+        Character.footprintWidth, Character.footprintHeight)
+    table.insert(enemies, e)
+end
+
+local function initGame()
+    world = bump.newWorld()
     p1 = Player(100, 200)
-    e1 = Enemy(200, 200, 50)
-    camera = require("lib.camera")
-    cam = camera(p1.x, p1.y, 3)
+    enemies = {}
 
     world:add(p1, p1.x + Character.footprintOffsetX, p1.y + Character.footprintOffsetY,
         Character.footprintWidth, Character.footprintHeight)
-    world:add(e1, e1.x + Character.footprintOffsetX, e1.y + Character.footprintOffsetY,
-        Character.footprintWidth, Character.footprintHeight)
+
+    for _ = 1, 3 do
+        spawnEnemy()
+    end
 
     if gameMap.layers["Walls"] then
         for _, wall in ipairs(gameMap.layers["Walls"].objects) do
             world:add(wall, wall.x, wall.y, wall.width, wall.height)
         end
     end
+
+    cam.x, cam.y = p1.x, p1.y
+end
+
+function love.load()
+    math.randomseed(os.time())
+
+    Object = require("lib.classic")
+    Character = require("character")
+    Player = require("player")
+    Enemy = require("enemy")
+    sti = require("lib/sti")
+    gameMap = sti("Maps/Street.lua")
+    cam = camera(100, 200, 3)
+
+    initGame()
 
     gameState = "menu"
 end
@@ -38,7 +72,31 @@ function love.update(dt)
     cam:move(dx / 2, dy / 2)
 
     p1:update(dt, world)
-    e1:update(dt, world, p1)
+    for _, e in ipairs(enemies) do
+        e:update(dt, world, p1)
+    end
+
+    for _, e in ipairs(enemies) do
+        if e:isDead() and not e.dying then
+            world:remove(e)
+            e:startDying()
+        end
+    end
+
+    for i = #enemies, 1, -1 do
+        if enemies[i]:isDeathAnimDone() then
+            table.remove(enemies, i)
+            spawnEnemy()
+        end
+    end
+
+    if p1:isDead() and not p1.knockedOut then
+        p1:startKnockout()
+    end
+
+    if p1:isKnockoutAnimDone() then
+        gameState = "gameover"
+    end
 
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
@@ -84,17 +142,28 @@ function drawHUD()
     love.graphics.rectangle("line", p1BarX, p1BarY, barWidth, barHeight)
     love.graphics.print("P1  " .. p1.health .. "/" .. p1.maxHealth, p1BarX, p1BarY - 14)
 
-    local e1BarX = love.graphics.getWidth() - margin - barWidth
-    local e1BarY = love.graphics.getHeight() - margin - barHeight
-    local e1Pct = math.max(0, e1.health / e1.maxHealth)
+    local now = love.timer.getTime()
+    local visibleEnemies = {}
+    for _, e in ipairs(enemies) do
+        if not e.dying and now - e.lastHitTime < 1.0 then
+            table.insert(visibleEnemies, e)
+        end
+    end
 
-    love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.rectangle("fill", e1BarX, e1BarY, barWidth, barHeight)
-    love.graphics.setColor(0.8, 0.1, 0.1)
-    love.graphics.rectangle("fill", e1BarX, e1BarY, barWidth * e1Pct, barHeight)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.rectangle("line", e1BarX, e1BarY, barWidth, barHeight)
-    love.graphics.print("E1  " .. e1.health .. "/" .. e1.maxHealth, e1BarX, e1BarY - 14)
+    local rowHeight = barHeight + 20
+    for i, e in ipairs(visibleEnemies) do
+        local eBarX = love.graphics.getWidth() - margin - barWidth
+        local eBarY = love.graphics.getHeight() - margin - barHeight - (i - 1) * rowHeight
+        local ePct = math.max(0, e.health / e.maxHealth)
+
+        love.graphics.setColor(0.2, 0.2, 0.2)
+        love.graphics.rectangle("fill", eBarX, eBarY, barWidth, barHeight)
+        love.graphics.setColor(0.8, 0.1, 0.1)
+        love.graphics.rectangle("fill", eBarX, eBarY, barWidth * ePct, barHeight)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.rectangle("line", eBarX, eBarY, barWidth, barHeight)
+        love.graphics.print("E" .. i .. "  " .. e.health .. "/" .. e.maxHealth, eBarX, eBarY - 14)
+    end
 
     love.graphics.setColor(1, 1, 1)
 end
@@ -113,16 +182,32 @@ function drawMenu()
     love.graphics.printf("D: alternar hitboxes de debug", 0, h / 2 + 85, w, "center")
 end
 
+function drawGameOver()
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("GAME OVER", 0, h / 2 - 20, w, "center")
+    love.graphics.printf("Presiona ENTER para reiniciar", 0, h / 2 + 10, w, "center")
+end
+
 function love.draw()
-    if gameState ~= "playing" then
+    if gameState == "menu" then
         drawMenu()
+        return
+    end
+
+    if gameState == "gameover" then
+        drawGameOver()
         return
     end
 
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Background"])
     p1:draw()
-    e1:draw()
+    for _, e in ipairs(enemies) do
+        e:draw()
+    end
 
     if debugMode then
         love.graphics.setColor(0, 1, 0, 0.5)
@@ -130,8 +215,12 @@ function love.draw()
         love.graphics.rectangle("line", px, py, pw, ph)
 
         love.graphics.setColor(1, 0, 0, 0.5)
-        local ex, ey, ew, eh = world:getRect(e1)
-        love.graphics.rectangle("line", ex, ey, ew, eh)
+        for _, e in ipairs(enemies) do
+            if not e.dying then
+                local ex, ey, ew, eh = world:getRect(e)
+                love.graphics.rectangle("line", ex, ey, ew, eh)
+            end
+        end
 
         love.graphics.setColor(1, 1, 0, 0.5)
         if gameMap.layers["Walls"] then
@@ -147,8 +236,16 @@ function love.draw()
 end
 
 function love.keypressed(key)
-    if gameState ~= "playing" then
+    if gameState == "menu" then
         if key == "return" or key == "space" then
+            gameState = "playing"
+        end
+        return
+    end
+
+    if gameState == "gameover" then
+        if key == "return" or key == "space" then
+            initGame()
             gameState = "playing"
         end
         return
@@ -164,15 +261,20 @@ function love.keypressed(key)
             local punchRange = 24
             local punchReach = 20
 
-            local dx = e1.x - p1.x
-            local dy = e1.y - p1.y
+            for _, e in ipairs(enemies) do
+                if not e.dying then
+                    local dx = e.x - p1.x
+                    local dy = e.y - p1.y
 
-            local correctDirection = (p1.scaleX == 1 and dx > 0) or (p1.scaleX == -1 and dx < 0)
+                    local correctDirection = (p1.scaleX == 1 and dx > 0) or (p1.scaleX == -1 and dx < 0)
 
-            local distance = math.sqrt(dx * dx + dy * dy)
+                    local distance = math.sqrt(dx * dx + dy * dy)
 
-            if correctDirection and distance < punchRange + punchReach then
-                e1:takeDamage(p1.attackDamage or 15)
+                    if correctDirection and distance < punchRange + punchReach then
+                        e:takeDamage(p1.attackDamage or 15)
+                        break
+                    end
+                end
             end
         end
     end

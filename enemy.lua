@@ -7,6 +7,8 @@ function Enemy:new(x, y)
     self.walkingImage = love.graphics.newImage("Sprites/Enemy/Walk.png")
     self.idleImage = love.graphics.newImage("Sprites/Enemy/Idle.png")
     self.punchImage = love.graphics.newImage("Sprites/Enemy/Punch.png")
+    self.hurtImage = love.graphics.newImage("Sprites/Enemy/Hurt.png")
+    self.knockdownImage = love.graphics.newImage("Sprites/Enemy/Knockdown.png")
 
     local g = anim8.newGrid(16, 32, self.walkingImage:getWidth(), self.walkingImage:getHeight())
     local singleG = anim8.newGrid(20, 32, self.punchImage:getWidth(), self.punchImage:getHeight())
@@ -24,9 +26,50 @@ function Enemy:new(x, y)
     self.cooldownTimer = 0
     self.punchRange = 20
     self.attackDamage = 10
+
+    self.moveStyle = "direct"
+    self.strafePhase = math.random() * 2 * math.pi
+    self.jitterTimer = 0
+    self.jitterAngle = 0
+
+    self.hitstunDuration = 0.4
+    self.hitstunTimer = 0
+    self.lastHitTime = -math.huge
+
+    self.dying = false
+    self.deathDuration = 1.0
+    self.deathTimer = 0
+end
+
+function Enemy:takeDamage(amount)
+    Enemy.super.takeDamage(self, amount)
+    self.hitstunTimer = self.hitstunDuration
+    self.lastHitTime = love.timer.getTime()
+    self.punching = false
+    self.punchTimer = 0
+end
+
+function Enemy:startDying()
+    self.dying = true
+    self.deathTimer = self.deathDuration
+end
+
+function Enemy:isDeathAnimDone()
+    return self.dying and self.deathTimer <= 0
 end
 
 function Enemy:update(dt, world, player)
+    if self.dying then
+        self.deathTimer = self.deathTimer - dt
+        return
+    end
+
+    if self.hitstunTimer > 0 then
+        self.hitstunTimer = math.max(0, self.hitstunTimer - dt)
+        self.moving = false
+        return
+    end
+
     local px, py = player.x, player.y
     self.animation:update(dt)
 
@@ -60,6 +103,19 @@ function Enemy:update(dt, world, player)
     else
         self.moving = true
         local angle = math.atan2(py - self.y, px - self.x)
+
+        if self.moveStyle == "strafer" then
+            self.strafePhase = self.strafePhase + dt * 3
+            angle = angle + math.sin(self.strafePhase) * 0.6
+        elseif self.moveStyle == "erratic" then
+            self.jitterTimer = self.jitterTimer - dt
+            if self.jitterTimer <= 0 then
+                self.jitterTimer = 0.3 + math.random() * 0.4
+                self.jitterAngle = (math.random() - 0.5) * 1.4
+            end
+            angle = angle + self.jitterAngle
+        end
+
         local moveX = math.cos(angle) * self.speed * dt
         local moveY = math.sin(angle) * self.speed * dt
         local goalX = self.x + moveX + Character.footprintOffsetX
@@ -71,6 +127,18 @@ function Enemy:update(dt, world, player)
 end
 
 function Enemy:draw()
+    if self.dying then
+        local originX = self.scaleX == 1 and 0 or self.knockdownImage:getWidth()
+        love.graphics.draw(self.knockdownImage, self.x, self.y, 0, self.scaleX, 1, originX, 0)
+        return
+    end
+
+    if self.hitstunTimer > 0 then
+        local originX = self.scaleX == 1 and 0 or self.hurtImage:getWidth()
+        love.graphics.draw(self.hurtImage, self.x, self.y, 0, self.scaleX, 1, originX, 0)
+        return
+    end
+
     local img = self.punching and self.punchImage or self.moving and self.walkingImage or self.idleImage
     local animation = self.punching and self.punch or self.animation
     local originX = self.scaleX == 1 and 0 or 16
